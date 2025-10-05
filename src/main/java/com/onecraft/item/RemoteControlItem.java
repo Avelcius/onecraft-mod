@@ -43,9 +43,8 @@ public class RemoteControlItem extends Item {
                 } else {
                     buf.writeText(Text.literal("No code is currently active. Use /onecraft generatecode first_door_code"));
                 }
-                buf.writeInt(100); // 5 seconds duration
 
-                // Use the correct packet for item dialogues
+                // Send the packet to the client to open the modal screen
                 ServerPlayNetworking.send(serverPlayer, ModMessages.SHOW_ITEM_DIALOGUE_ID, buf);
 
                 return TypedActionResult.success(user.getStackInHand(hand));

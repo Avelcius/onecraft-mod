@@ -1,6 +1,6 @@
 package com.onecraft.networking.packet;
 
-import com.onecraft.client.hud.ItemDialogueHud;
+import com.onecraft.screen.ItemDialogueScreen;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -11,11 +11,10 @@ public class ShowItemDialogueS2CPacket {
     public static void receive(MinecraftClient client, ClientPlayNetworkHandler handler,
                                PacketByteBuf buf, PacketSender responseSender) {
         Text dialogueText = buf.readText();
-        int duration = buf.readInt();
 
-        // Show the dialogue on the Item HUD
+        // Open the new modal dialogue screen
         client.execute(() -> {
-            ItemDialogueHud.showItemDialogue(dialogueText, duration);
+            client.setScreen(new ItemDialogueScreen(dialogueText));
         });
     }
 }

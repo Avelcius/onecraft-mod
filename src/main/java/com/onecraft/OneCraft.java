@@ -4,7 +4,9 @@ import com.onecraft.block.ModBlocks;
 import com.onecraft.block.entity.ModBlockEntities;
 import com.onecraft.command.GenerateCodeCommand;
 import com.onecraft.item.ModItems;
+import com.onecraft.networking.ModMessages;
 import com.onecraft.screen.ModScreenHandlers;
+import com.onecraft.sound.ModSounds;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import org.slf4j.Logger;
@@ -21,6 +23,8 @@ public class OneCraft implements ModInitializer {
         ModBlocks.registerModBlocks();
         ModBlockEntities.registerBlockEntities();
         ModScreenHandlers.registerScreenHandlers();
+        ModSounds.registerSounds();
+        ModMessages.registerC2SPackets();
 
         // Register Commands
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {

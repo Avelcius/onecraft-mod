@@ -1,6 +1,5 @@
 package com.onecraft;
 
-import com.onecraft.client.hud.ItemDialogueHud;
 import com.onecraft.client.hud.NpcDialogueHud;
 import com.onecraft.networking.ModMessages;
 import com.onecraft.networking.packet.ShowItemDialogueS2CPacket;
@@ -21,8 +20,7 @@ public class OneCraftClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(ModMessages.SHOW_NPC_DIALOGUE_ID, ShowNpcDialogueS2CPacket::receive);
         ClientPlayNetworking.registerGlobalReceiver(ModMessages.SHOW_ITEM_DIALOGUE_ID, ShowItemDialogueS2CPacket::receive);
 
-        // Register HUDs
+        // Register HUD for NPC dialogues
         HudRenderCallback.EVENT.register(new NpcDialogueHud());
-        HudRenderCallback.EVENT.register(new ItemDialogueHud());
     }
 }
