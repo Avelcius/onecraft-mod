@@ -11,12 +11,12 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public class ComputerScreen extends HandledScreen<ComputerScreenHandler> {
-    private static final Identifier TEXTURE = new Identifier("minecraft", "textures/gui/container/generic_54.png");
+    // I will use a generic texture for the background.
+    // The colored squares will be drawn with simple fill commands.
+    private static final Identifier TEXTURE = new Identifier("minecraft", "textures/gui/container/dispenser.png");
 
     public ComputerScreen(ComputerScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
-        // Make the background taller to fit all the buttons
-        this.backgroundHeight = 222;
     }
 
     @Override
@@ -27,35 +27,25 @@ public class ComputerScreen extends HandledScreen<ComputerScreenHandler> {
         int x = (width - backgroundWidth) / 2;
         int y = (height - backgroundHeight) / 2;
 
-        // Create buttons for 4 code slots
+        // Create buttons for the 4 digit slots
         for (int i = 0; i < 4; i++) {
             int slotX = x + 44 + (i * 22);
 
-            // Color buttons
-            int colorButtonUpId = i;
-            int colorButtonDownId = i + 4;
-            this.addDrawableChild(ButtonWidget.builder(Text.literal("^"), (button) -> {
-                client.interactionManager.clickButton(handler.syncId, colorButtonUpId);
-            }).dimensions(slotX, y + 30, 20, 20).build());
-            this.addDrawableChild(ButtonWidget.builder(Text.literal("v"), (button) -> {
-                client.interactionManager.clickButton(handler.syncId, colorButtonDownId);
-            }).dimensions(slotX, y + 70, 20, 20).build());
-
             // Digit buttons
-            int digitButtonUpId = i + 8;
-            int digitButtonDownId = i + 12;
-             this.addDrawableChild(ButtonWidget.builder(Text.literal("^"), (button) -> {
+            int digitButtonUpId = i;
+            int digitButtonDownId = i + 4;
+            this.addDrawableChild(ButtonWidget.builder(Text.literal("^"), (button) -> {
                 client.interactionManager.clickButton(handler.syncId, digitButtonUpId);
-            }).dimensions(slotX, y + 100, 20, 20).build());
+            }).dimensions(slotX, y + 60, 20, 20).build());
             this.addDrawableChild(ButtonWidget.builder(Text.literal("v"), (button) -> {
                 client.interactionManager.clickButton(handler.syncId, digitButtonDownId);
-            }).dimensions(slotX, y + 140, 20, 20).build());
+            }).dimensions(slotX, y + 82, 20, 20).build());
         }
 
         // Enter button
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Enter"), (button) -> {
-            client.interactionManager.clickButton(handler.syncId, 16);
-        }).dimensions(x + (backgroundWidth / 2) - 40, y + 170, 80, 20).build());
+            client.interactionManager.clickButton(handler.syncId, 8);
+        }).dimensions(x + (backgroundWidth / 2) - 40, y + 110, 80, 20).build());
     }
 
     @Override
@@ -70,25 +60,27 @@ public class ComputerScreen extends HandledScreen<ComputerScreenHandler> {
 
     @Override
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
-        super.drawForeground(context, mouseX, mouseY);
+        context.drawText(this.textRenderer, this.title, this.titleX, this.titleY, 4210752, false);
 
-        // Draw the current code state
+        // Draw the colored squares and the current digits
         for (int i = 0; i < 4; i++) {
             int slotX = 44 + (i * 22);
 
-            // Draw color text
-            CodeColor color = CodeColor.values()[handler.getColor(i)];
-            context.drawText(this.textRenderer, color.asText(), slotX, 55, 0xFFFFFF, true);
+            // Draw colored square
+            CodeColor color = CodeColor.values()[handler.colorSequence[i]];
+            int colorInt = color.getFormatting().getColorValue() != null ? color.getFormatting().getColorValue() : 0xFFFFFF;
+            context.fill(slotX, 40, slotX + 20, 60, 0xFF000000 | colorInt); // Draw solid color square
 
-            // Draw digit text
+            // Draw digit text below the square
             int digit = handler.getDigit(i);
-            context.drawText(this.textRenderer, Text.literal(String.valueOf(digit)), slotX + 7, 125, 0xFFFFFF, true);
+            String digitText = String.valueOf(digit);
+            int textWidth = this.textRenderer.getWidth(digitText);
+            context.drawText(this.textRenderer, Text.literal(digitText), slotX + (20 - textWidth) / 2, 46, 0xFFFFFF, true);
         }
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Corrected call to renderBackground
         this.renderBackground(context);
         super.render(context, mouseX, mouseY, delta);
         drawMouseoverTooltip(context, mouseX, mouseY);

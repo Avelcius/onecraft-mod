@@ -5,11 +5,8 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
-import net.minecraft.world.World;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class CodeState extends PersistentState {
 
@@ -45,10 +42,15 @@ public class CodeState extends PersistentState {
         if (codes.containsKey(id)) {
             return false; // Code already exists
         }
+
+        // Create a list of the 4 unique colors and shuffle them
+        List<CodeColor> uniqueColors = new ArrayList<>(Arrays.asList(CodeColor.values()));
+        Collections.shuffle(uniqueColors);
+
         Random random = new Random();
         int[] newCode = new int[8];
         for (int i = 0; i < 4; i++) {
-            newCode[i] = random.nextInt(CodeColor.values().length); // Random color
+            newCode[i] = uniqueColors.get(i).ordinal(); // Assign the unique shuffled color
             newCode[i + 4] = random.nextInt(10); // Random digit 0-9
         }
         codes.put(id, newCode);

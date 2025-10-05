@@ -3,12 +3,9 @@ package com.onecraft.screen;
 import com.onecraft.block.LockedDoorBlock;
 import com.onecraft.block.ModBlocks;
 import com.onecraft.state.CodeState;
-import com.onecraft.util.CodeColor;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.screen.ArrayPropertyDelegate;
@@ -21,88 +18,78 @@ import net.minecraft.world.World;
 import java.util.Arrays;
 
 public class ComputerScreenHandler extends ScreenHandler {
-    private final Inventory inventory;
     protected final PropertyDelegate propertyDelegate;
-    private final BlockPos computerPos;
+    public final int[] colorSequence = new int[4];
     private final World world;
+    private final BlockPos pos;
 
     // Client-side constructor
-    public ComputerScreenHandler(int syncId, PlayerInventory playerInventory, PacketByteBuf buf) {
-        this(syncId, playerInventory, new ArrayPropertyDelegate(8), buf.readBlockPos());
+    public ComputerScreenHandler(int syncId, PlayerInventory inventory, PacketByteBuf buf) {
+        this(syncId, inventory, new ArrayPropertyDelegate(4), BlockPos.ORIGIN);
+        for(int i = 0; i < 4; i++) {
+            this.colorSequence[i] = buf.readInt();
+        }
     }
 
     // Server-side constructor
-    public ComputerScreenHandler(int syncId, PlayerInventory playerInventory, PropertyDelegate propertyDelegate, BlockPos pos) {
+    public ComputerScreenHandler(int syncId, PlayerInventory inventory, PropertyDelegate propertyDelegate, BlockPos pos) {
         super(ModScreenHandlers.COMPUTER_SCREEN_HANDLER, syncId);
-        this.inventory = new SimpleInventory(0);
-        this.world = playerInventory.player.getWorld();
+        this.world = inventory.player.getWorld();
+        this.pos = pos;
+        checkDataCount(propertyDelegate, 4);
         this.propertyDelegate = propertyDelegate;
-        this.computerPos = pos;
-
-        addProperties(propertyDelegate);
-    }
-
-    public int getColor(int index) {
-        return this.propertyDelegate.get(index);
+        this.addProperties(propertyDelegate);
     }
 
     public int getDigit(int index) {
-        return this.propertyDelegate.get(index + 4);
+        return this.propertyDelegate.get(index);
     }
 
     @Override
     public boolean onButtonClick(PlayerEntity player, int id) {
-        if (id >= 0 && id < 16) { // Handle code input buttons
-            if (id < 4) { // cycle color up
-                int currentColor = this.propertyDelegate.get(id);
-                this.propertyDelegate.set(id, (currentColor + 1) % CodeColor.values().length);
-            } else if (id < 8) { // cycle color down
-                int colorIndex = id - 4;
-                int currentColor = this.propertyDelegate.get(colorIndex);
-                this.propertyDelegate.set(colorIndex, (currentColor - 1 + CodeColor.values().length) % CodeColor.values().length);
-            } else if (id < 12) { // cycle digit up
-                int digitIndex = id - 8;
-                int currentDigit = this.propertyDelegate.get(digitIndex + 4);
-                this.propertyDelegate.set(digitIndex + 4, (currentDigit + 1) % 10);
-            } else { // cycle digit down
-                int digitIndex = id - 12;
-                int currentDigit = this.propertyDelegate.get(digitIndex + 4);
-                this.propertyDelegate.set(digitIndex + 4, (currentDigit - 1 + 10) % 10);
-            }
-        } else if (id == 16) { // Enter button
+        if (id >= 0 && id < 4) { // Cycle digit up
+            int currentDigit = this.propertyDelegate.get(id);
+            this.propertyDelegate.set(id, (currentDigit + 1) % 10);
+            return true;
+        }
+        if (id >= 4 && id < 8) { // Cycle digit down
+            int digitIndex = id - 4;
+            int currentDigit = this.propertyDelegate.get(digitIndex);
+            this.propertyDelegate.set(digitIndex, (currentDigit - 1 + 10) % 10);
+            return true;
+        }
+        if (id == 8) { // Enter button
             if (!world.isClient) {
-                checkCodeAndOpenDoor();
+                checkCodeAndOpenDoor((ServerWorld) world);
             }
             return true;
         }
-        return true;
+        return false;
     }
 
-    private void checkCodeAndOpenDoor() {
-        if (!(world instanceof ServerWorld serverWorld)) {
-            return;
-        }
-
-        int[] enteredCode = new int[8];
-        for (int i = 0; i < 8; i++) {
-            enteredCode[i] = this.propertyDelegate.get(i);
-        }
-
+    private void checkCodeAndOpenDoor(ServerWorld serverWorld) {
         CodeState state = CodeState.getServerState(serverWorld);
         int[] correctCode = state.getCode("first_door_code");
 
-        if (Arrays.equals(enteredCode, correctCode)) {
-            openNearestDoor();
+        boolean match = true;
+        for (int i = 0; i < 4; i++) {
+            if (correctCode[i+4] != this.propertyDelegate.get(i)) {
+                match = false;
+                break;
+            }
+        }
+
+        if (match) {
+            openNearestDoor(serverWorld);
         }
     }
 
-    private void openNearestDoor() {
-        // Search for the door in a 10 block radius
-        for (BlockPos pos : BlockPos.iterate(computerPos.add(-10, -10, -10), computerPos.add(10, 10, 10))) {
-            BlockState state = world.getBlockState(pos);
+    private void openNearestDoor(ServerWorld serverWorld) {
+        for (BlockPos doorPos : BlockPos.iterate(pos.add(-10, -10, -10), pos.add(10, 10, 10))) {
+            BlockState state = serverWorld.getBlockState(doorPos);
             if (state.isOf(ModBlocks.LOCKED_DOOR) && state.get(LockedDoorBlock.LOCKED)) {
-                world.setBlockState(pos, state.with(LockedDoorBlock.LOCKED, false), 3);
-                return; // Open only one door
+                serverWorld.setBlockState(doorPos, state.with(LockedDoorBlock.LOCKED, false), 3);
+                return;
             }
         }
     }
@@ -114,6 +101,6 @@ public class ComputerScreenHandler extends ScreenHandler {
 
     @Override
     public boolean canUse(PlayerEntity player) {
-        return this.inventory.canPlayerUse(player);
+        return this.world.getBlockState(this.pos).isOf(ModBlocks.COMPUTER_BLOCK) && player.squaredDistanceTo((double)this.pos.getX() + 0.5, (double)this.pos.getY() + 0.5, (double)this.pos.getZ() + 0.5) <= 64.0;
     }
 }
