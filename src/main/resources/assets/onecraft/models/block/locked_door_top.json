@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/door_top_left",
+  "textures": {
+    "bottom": "onecraft:block/locked_door_bottom",
+    "top": "onecraft:block/locked_door_top"
+  }
+}

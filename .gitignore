@@ -1,0 +1,33 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+out/
+/nbproject/private/
+/build/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# Gradle
+.gradle/
+build/
+# Gradle Wrapper files should be committed to the repository.
+
+# Logs
+logs/
+*.log
+
+# User-specific
+.DS_Store
+Thumbs.db
+
+# Fabric Loom
+.cache/
+run/
+.project
+.classpath
+.settings/

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "onecraft",
+  "version": "${version}",
+
+  "name": "OneCraft",
+  "description": "A mod that aims to recreate the game Oneshot in Minecraft.",
+  "authors": [
+    "You!"
+  ],
+  "contact": {
+    "homepage": "",
+    "sources": ""
+  },
+
+  "license": "CC0-1.0",
+  "icon": "assets/onecraft/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.onecraft.OneCraft"
+    ],
+    "client": [
+      "com.onecraft.OneCraftClient"
+    ]
+  },
+  "mixins": [
+    "onecraft.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.15.7",
+    "fabric-api": "*",
+    "minecraft": "~1.20.1"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
